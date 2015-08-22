@@ -3,11 +3,18 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
+	"net/http"
 )
 
 type Page struct {
 	Title string
 	Body  []byte
+}
+
+func servePage(w http.ResponseWriter, r *http.Request) {
+	title := r.URL.Path[len("/view/"):]
+	p, _ := loadPage(title)
+	fmt.Fprintf(w, "<h1>%s</h1><p>%s</p>", p.Title, p.Body)
 }
 
 func (p *Page) save() error {
@@ -26,12 +33,6 @@ func loadPage(title string) (*Page, error) {
 }
 
 func main() {
-	simple_page := &Page{Title: "simple_page", Body: []byte("This is a simple page")}
-	simple_page.save()
-
-	page, err := loadPage("simple_page")
-  if err != nil {
-    fmt.Println("Halt! Error!")
-  }
-	fmt.Println(string(page.Body))
+	http.HandleFunc("/view/", servePage)
+	http.ListenAndServe(":3000", nil)
 }
